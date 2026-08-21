@@ -37,6 +37,7 @@ import { McpAuth } from "@/mcp/auth"
 import { Command } from "@/command"
 import { Truncate } from "@/tool/truncate"
 import { ToolRegistry } from "@/tool/registry"
+import { node as LearningNode } from "@/learning/service"
 import { Format } from "@/format"
 import { InstanceStore } from "@/project/instance-store"
 import { Project } from "@/project/project"
@@ -96,6 +97,7 @@ export const AppLayer = AppNodeBuilderV1.build(
     Command.node,
     Truncate.node,
     ToolRegistry.node,
+    LearningNode,
     Format.node,
     InstanceStore.node,
     Project.node,

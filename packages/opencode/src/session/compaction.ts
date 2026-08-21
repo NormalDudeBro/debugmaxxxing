@@ -22,6 +22,7 @@ import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
 import { buildPrompt } from "@opencode-ai/core/session/compaction"
 import { SessionCompactionEvent } from "@opencode-ai/schema/session-compaction-event"
+import * as Learning from "@/learning/service"
 
 export const Event = SessionCompactionEvent
 
@@ -199,6 +200,7 @@ const layer = Layer.effect(
     const provider = yield* Provider.Service
     const events = yield* EventV2Bridge.Service
     const flags = yield* RuntimeFlags.Service
+    const learning = yield* Learning.Service
 
     const isOverflow = Effect.fn("SessionCompaction.isOverflow")(function* (input: {
       tokens: SessionV1.Assistant["tokens"]
@@ -369,6 +371,10 @@ const layer = Layer.effect(
         cfg,
         model,
       })
+      const snapshot = selected.head.map(serialize).filter(Boolean).join("\n\n")
+      yield* learning.snapshotCompaction({ sessionID: input.sessionID, summary: snapshot }).pipe(
+        Effect.catchCause((cause) => Effect.logWarning("learning compaction snapshot failed", { cause })),
+      )
       // Allow plugins to inject context or replace compaction prompt.
       const compacting = yield* plugin.trigger(
         "experimental.session.compacting",
@@ -552,6 +558,11 @@ const layer = Layer.effect(
       if (processor.message.error) return "stop"
       if (result === "continue") {
         yield* events.publish(Event.Compacted, { sessionID: input.sessionID })
+        const compactedMessage = (yield* session.messages({ sessionID: input.sessionID }).pipe(Effect.orDie)).find((message) => message.info.id === processor.message.id)
+        const summary = (compactedMessage ? summaryText(compactedMessage) : undefined) ?? conversation
+        yield* learning.compacted({ sessionID: input.sessionID, summary }).pipe(
+          Effect.catchCause((cause) => Effect.logWarning("learning compaction indexing failed", { cause })),
+        )
       }
       return result
     })
@@ -602,6 +613,7 @@ export const node = LayerNode.make({
     Provider.node,
     EventV2Bridge.node,
     RuntimeFlags.node,
+    Learning.node,
   ],
 })
 

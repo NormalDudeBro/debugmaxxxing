@@ -1901,6 +1901,33 @@ export type Config = {
     paths?: Array<string>
     urls?: Array<string>
   }
+  learning?: {
+    enabled?: boolean
+    automatic?: boolean
+    autoFix?: boolean
+    retryOriginal?: boolean
+    scope?: "project" | "global"
+    globalPromotionThreshold?: number
+    privacy?: "balanced" | "strict" | "public"
+    recall?: boolean
+    recallModel?: string
+    recallThreshold?: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+    recallTopK?: number
+    captureLimit?: number
+    patternLimit?: number
+    memoryLimit?: number
+    stateCommitLimit?: number
+    auditLimit?: number
+    autoPromote?: boolean
+    promotionThreshold?: number
+    communityPacks?: boolean
+    dream?: boolean
+    audit?: boolean
+    watch?: boolean
+    wiki?: boolean
+    graph?: boolean
+    retentionDays?: number
+  }
   references?: {
     [key: string]: string | ConfigV2ReferenceGit | ConfigV2ReferenceLocal
   }
@@ -7522,6 +7549,460 @@ export type ConfigProvidersResponses = {
 }
 
 export type ConfigProvidersResponse = ConfigProvidersResponses[keyof ConfigProvidersResponses]
+
+export type LearningStatusData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/status"
+}
+
+export type LearningStatusErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningStatusError = LearningStatusErrors[keyof LearningStatusErrors]
+
+export type LearningStatusResponses = {
+  /**
+   * Success
+   */
+  200: {
+    [key: string]: unknown
+  }
+}
+
+export type LearningStatusResponse = LearningStatusResponses[keyof LearningStatusResponses]
+
+export type LearningRememberData = {
+  body?: {
+    summary: string
+    content: string
+    scope?: "project" | "global"
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/remember"
+}
+
+export type LearningRememberErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningRememberError = LearningRememberErrors[keyof LearningRememberErrors]
+
+export type LearningRememberResponses = {
+  /**
+   * Success
+   */
+  200: boolean
+}
+
+export type LearningRememberResponse = LearningRememberResponses[keyof LearningRememberResponses]
+
+export type LearningCorrectData = {
+  body?: {
+    rule: string
+    scope?: "project" | "global"
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/correct"
+}
+
+export type LearningCorrectErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningCorrectError = LearningCorrectErrors[keyof LearningCorrectErrors]
+
+export type LearningCorrectResponses = {
+  /**
+   * Success
+   */
+  200: boolean
+}
+
+export type LearningCorrectResponse = LearningCorrectResponses[keyof LearningCorrectResponses]
+
+export type LearningRecallData = {
+  body?: {
+    terms: Array<string>
+    limit?: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/recall"
+}
+
+export type LearningRecallErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningRecallError = LearningRecallErrors[keyof LearningRecallErrors]
+
+export type LearningRecallResponses = {
+  /**
+   * Success
+   */
+  200: Array<unknown>
+}
+
+export type LearningRecallResponse = LearningRecallResponses[keyof LearningRecallResponses]
+
+export type LearningDreamData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/dream"
+}
+
+export type LearningDreamErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningDreamError = LearningDreamErrors[keyof LearningDreamErrors]
+
+export type LearningDreamResponses = {
+  /**
+   * Success
+   */
+  200: {
+    [key: string]: unknown
+  }
+}
+
+export type LearningDreamResponse = LearningDreamResponses[keyof LearningDreamResponses]
+
+export type LearningHistoryData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/history"
+}
+
+export type LearningHistoryErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningHistoryError = LearningHistoryErrors[keyof LearningHistoryErrors]
+
+export type LearningHistoryResponses = {
+  /**
+   * Success
+   */
+  200: Array<unknown>
+}
+
+export type LearningHistoryResponse = LearningHistoryResponses[keyof LearningHistoryResponses]
+
+export type LearningReportData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/report"
+}
+
+export type LearningReportErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningReportError = LearningReportErrors[keyof LearningReportErrors]
+
+export type LearningReportResponses = {
+  /**
+   * Success
+   */
+  200: {
+    [key: string]: unknown
+  }
+}
+
+export type LearningReportResponse = LearningReportResponses[keyof LearningReportResponses]
+
+export type LearningExportData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/export"
+}
+
+export type LearningExportErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningExportError = LearningExportErrors[keyof LearningExportErrors]
+
+export type LearningExportResponses = {
+  /**
+   * Success
+   */
+  200: {
+    [key: string]: unknown
+  }
+}
+
+export type LearningExportResponse = LearningExportResponses[keyof LearningExportResponses]
+
+export type LearningReindexData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/reindex"
+}
+
+export type LearningReindexErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningReindexError = LearningReindexErrors[keyof LearningReindexErrors]
+
+export type LearningReindexResponses = {
+  /**
+   * Success
+   */
+  200: {
+    [key: string]: unknown
+  }
+}
+
+export type LearningReindexResponse = LearningReindexResponses[keyof LearningReindexResponses]
+
+export type LearningModelDeleteData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/model"
+}
+
+export type LearningModelDeleteErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningModelDeleteError = LearningModelDeleteErrors[keyof LearningModelDeleteErrors]
+
+export type LearningModelDeleteResponses = {
+  /**
+   * Success
+   */
+  200: boolean
+}
+
+export type LearningModelDeleteResponse = LearningModelDeleteResponses[keyof LearningModelDeleteResponses]
+
+export type LearningModelStatusData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/model"
+}
+
+export type LearningModelStatusErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningModelStatusError = LearningModelStatusErrors[keyof LearningModelStatusErrors]
+
+export type LearningModelStatusResponses = {
+  /**
+   * Success
+   */
+  200: {
+    [key: string]: unknown
+  }
+}
+
+export type LearningModelStatusResponse = LearningModelStatusResponses[keyof LearningModelStatusResponses]
+
+export type LearningModelDownloadData = {
+  body?: {
+    download?: boolean
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/model"
+}
+
+export type LearningModelDownloadErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningModelDownloadError = LearningModelDownloadErrors[keyof LearningModelDownloadErrors]
+
+export type LearningModelDownloadResponses = {
+  /**
+   * Success
+   */
+  200: {
+    [key: string]: unknown
+  }
+}
+
+export type LearningModelDownloadResponse = LearningModelDownloadResponses[keyof LearningModelDownloadResponses]
+
+export type LearningClearData = {
+  body?: {
+    scope?: "project" | "global"
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/clear"
+}
+
+export type LearningClearErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningClearError = LearningClearErrors[keyof LearningClearErrors]
+
+export type LearningClearResponses = {
+  /**
+   * Success
+   */
+  200: boolean
+}
+
+export type LearningClearResponse = LearningClearResponses[keyof LearningClearResponses]
+
+export type LearningPackInstallData = {
+  body?: {
+    url: string
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/packs"
+}
+
+export type LearningPackInstallErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningPackInstallError = LearningPackInstallErrors[keyof LearningPackInstallErrors]
+
+export type LearningPackInstallResponses = {
+  /**
+   * Success
+   */
+  200: {
+    [key: string]: unknown
+  }
+}
+
+export type LearningPackInstallResponse = LearningPackInstallResponses[keyof LearningPackInstallResponses]
+
+export type LearningKnowledgeData = {
+  body?: {
+    terms: Array<string>
+    target?: "wiki" | "codegraph" | "graph"
+    limit?: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+  }
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/learning/knowledge"
+}
+
+export type LearningKnowledgeErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+}
+
+export type LearningKnowledgeError = LearningKnowledgeErrors[keyof LearningKnowledgeErrors]
+
+export type LearningKnowledgeResponses = {
+  /**
+   * Success
+   */
+  200: unknown
+}
 
 export type ExperimentalCapabilitiesGetData = {
   body?: never

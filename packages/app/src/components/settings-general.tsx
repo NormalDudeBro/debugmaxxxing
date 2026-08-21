@@ -1,4 +1,4 @@
-import { Component, Show, createMemo, createResource, onMount, type JSX } from "solid-js"
+import { Component, Show, createMemo, createResource, createSignal, onMount, type JSX } from "solid-js"
 import { Button } from "@opencode-ai/ui/button"
 import { Icon } from "@opencode-ai/ui/icon"
 import { Select } from "@opencode-ai/ui/select"
@@ -31,6 +31,8 @@ import { decode64 } from "@/utils/base64"
 import { playSoundById, SOUND_OPTIONS } from "@/utils/sound"
 import { ExternalLink } from "./external-link"
 import { SettingsList } from "./settings-list"
+import { DialogLearningConfirm } from "./dialog-learning-confirm"
+import { showToast } from "@/utils/toast"
 
 let demoSoundState = {
   cleanup: undefined as (() => void) | undefined,
@@ -53,6 +55,23 @@ type ShellSelectOption = {
   id: string
   value: string
   label: string
+}
+
+type LearningAction = "dream" | "reindex" | "modelDownload" | "modelDelete" | "clear"
+type LearningClient = {
+  dream(input: { directory?: string }): Promise<unknown>
+  reindex(input: { directory?: string }): Promise<unknown>
+  modelDownload(input: { directory?: string }): Promise<unknown>
+  modelDelete(input: { directory?: string }): Promise<unknown>
+  clear(input: { directory?: string; scope: "project" }): Promise<unknown>
+}
+
+export async function executeLearningAction(client: LearningClient, action: LearningAction, directory?: string) {
+  if (action === "dream") return client.dream({ directory })
+  if (action === "reindex") return client.reindex({ directory })
+  if (action === "modelDownload") return client.modelDownload({ directory })
+  if (action === "modelDelete") return client.modelDelete({ directory })
+  return client.clear({ directory, scope: "project" })
 }
 
 // To prevent audio from overlapping/playing very quickly when navigating the settings menus,
@@ -156,6 +175,54 @@ export const SettingsGeneral: Component = () => {
 
   const autoOption = { id: "auto", value: "", label: language.t("settings.general.row.shell.autoDefault") }
   const currentShell = createMemo(() => serverSync().data.config.shell ?? "")
+  const learning = createMemo(() => serverSync().data.config.learning ?? {})
+  const updateLearning = (next: Record<string, unknown>) => {
+    void serverSync().updateConfig({ learning: { ...learning(), ...next } })
+  }
+  const learningEnabled = createMemo(() => learning().enabled !== false)
+  const scopeOptions = [
+    { value: "project" as const, label: "Project" },
+    { value: "global" as const, label: "Global" },
+  ]
+  const privacyOptions = [
+    { value: "balanced" as const, label: "Balanced" },
+    { value: "strict" as const, label: "Strict" },
+    { value: "public" as const, label: "Public only" },
+  ]
+  const [learningStatus, { refetch: refetchLearningStatus }] = createResource(async () => {
+    const sdk = serverSdk()
+    return (await sdk.client.learning.status({ directory: dir() })).data ?? {}
+  })
+  const recallMode = createMemo(() => {
+    const mode = learningStatus()?.mode
+    return typeof mode === "string" ? mode : "lexical"
+  })
+  const [learningPending, setLearningPending] = createSignal<string>()
+  const learningAction = async (action: LearningAction) => {
+    if (learningPending()) return
+    setLearningPending(action)
+    try {
+      const sdk = serverSdk().client.learning
+      await executeLearningAction(sdk, action, dir())
+      await refetchLearningStatus()
+      showToast({ title: "Learning updated", description: `${action} completed successfully.` })
+    } catch (error) {
+      showToast({ title: language.t("common.requestFailed"), description: error instanceof Error ? error.message : String(error) })
+    } finally {
+      setLearningPending()
+    }
+  }
+  const confirmLearningAction = (action: "modelDelete" | "clear") => {
+    const clear = action === "clear"
+    void dialog.push(() => (
+      <DialogLearningConfirm
+        title={clear ? "Clear project learning?" : "Delete the local model?"}
+        description={clear ? "This removes patterns, memories, history, and audit data for this project." : "Semantic recall will use lexical fallback until the model is downloaded again."}
+        action={clear ? "Clear project" : "Delete model"}
+        onConfirm={() => void learningAction(action)}
+      />
+    ))
+  }
 
   const shellOptions = createMemo<ShellSelectOption[]>(() => {
     const list = shells.latest
@@ -345,6 +412,65 @@ export const SettingsGeneral: Component = () => {
             triggerVariant="settings"
             triggerStyle={{ "min-width": "180px" }}
           />
+        </SettingsRow>
+
+        <SettingsRow
+          title={language.t("settings.general.learning.enabled.title")}
+          description={language.t("settings.general.learning.enabled.description")}
+        >
+          <div data-action="settings-learning-enabled">
+            <Switch checked={learningEnabled()} onChange={(checked) => updateLearning({ enabled: checked })} />
+          </div>
+        </SettingsRow>
+
+        <SettingsRow title={language.t("settings.general.learning.automatic.title")} description={language.t("settings.general.learning.automatic.description")}>
+          <Switch checked={learning().automatic !== false} disabled={!learningEnabled()} onChange={(checked) => updateLearning({ automatic: checked })} />
+        </SettingsRow>
+
+        <SettingsRow title={language.t("settings.general.learning.recovery.title")} description={language.t("settings.general.learning.recovery.description")}>
+          <div class="flex items-center gap-3">
+            <Switch checked={learning().autoFix !== false} disabled={!learningEnabled()} onChange={(checked) => updateLearning({ autoFix: checked })} />
+            <Switch checked={learning().retryOriginal !== false} disabled={!learningEnabled()} onChange={(checked) => updateLearning({ retryOriginal: checked })} />
+          </div>
+        </SettingsRow>
+
+        <SettingsRow title={language.t("settings.general.learning.scope.title")} description={language.t("settings.general.learning.scope.description")}>
+          <div class="flex items-center gap-2">
+            <Select
+              options={scopeOptions}
+              current={scopeOptions.find((option) => option.value === (learning().scope ?? "project"))}
+              value={(option) => option.value}
+              label={(option) => option.label}
+              onSelect={(option) => option && updateLearning({ scope: option.value })}
+              variant="secondary"
+              size="small"
+              triggerVariant="settings"
+            />
+            <Select
+              options={privacyOptions}
+              current={privacyOptions.find((option) => option.value === (learning().privacy ?? "balanced"))}
+              value={(option) => option.value}
+              label={(option) => option.label}
+              onSelect={(option) => option && updateLearning({ privacy: option.value })}
+              variant="secondary"
+              size="small"
+              triggerVariant="settings"
+            />
+          </div>
+        </SettingsRow>
+
+        <SettingsRow title={language.t("settings.general.learning.recall.title")} description={language.t("settings.general.learning.recall.description", { mode: recallMode() })}>
+          <Switch checked={learning().recall !== false} disabled={!learningEnabled()} onChange={(checked) => updateLearning({ recall: checked })} />
+        </SettingsRow>
+
+        <SettingsRow title={language.t("settings.general.learning.actions.title")} description={language.t("settings.general.learning.actions.description")}>
+          <div class="flex items-center gap-1 flex-wrap justify-end">
+            <Button size="small" variant="ghost" disabled={!!learningPending()} onClick={() => void learningAction("dream")}>Dream</Button>
+            <Button size="small" variant="ghost" disabled={!!learningPending()} onClick={() => void learningAction("reindex")}>Reindex</Button>
+            <Button size="small" variant="ghost" disabled={!!learningPending()} onClick={() => void learningAction("modelDownload")}>Download model</Button>
+            <Button size="small" variant="ghost" disabled={!!learningPending()} onClick={() => confirmLearningAction("modelDelete")}>Delete model</Button>
+            <Button size="small" variant="ghost" disabled={!!learningPending()} onClick={() => confirmLearningAction("clear")}>Clear project</Button>
+          </div>
         </SettingsRow>
 
         <SettingsRow

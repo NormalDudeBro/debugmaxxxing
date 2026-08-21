@@ -1,4 +1,6 @@
+import { LEARNING_ENGLISH } from "./learning-common"
 export const dict = {
+  ...LEARNING_ENGLISH,
   "command.category.suggested": "Ehdotetut",
   "command.category.view": "Näytä",
   "command.category.project": "Projekti",

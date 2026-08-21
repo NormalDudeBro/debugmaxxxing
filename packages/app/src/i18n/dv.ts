@@ -1,4 +1,6 @@
+import { LEARNING_ENGLISH } from "./learning-common"
 export const dict = {
+  ...LEARNING_ENGLISH,
   "desktop.menu.app": "OpenCode އެވެ",
   "desktop.menu.file": "ފައިލް",
   "desktop.menu.edit": "ބަދަލު ގެނައުން",

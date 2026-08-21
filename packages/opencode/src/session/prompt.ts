@@ -56,6 +56,7 @@ import { SessionTable } from "@opencode-ai/core/session/sql"
 import { SessionReminders } from "./reminders"
 import { SessionTools } from "./tools"
 import { LLMEvent } from "@opencode-ai/llm"
+import * as Learning from "@/learning/service"
 
 // @ts-ignore
 globalThis.AI_SDK_LOG_WARNINGS = false
@@ -140,6 +141,7 @@ const layer = Layer.effect(
     const events = yield* EventV2Bridge.Service
     const flags = yield* RuntimeFlags.Service
     const database = yield* Database.Service
+    const learning = yield* Learning.Service
     const { db } = database
     const ops = Effect.fn("SessionPrompt.ops")(function* () {
       return {
@@ -1261,11 +1263,13 @@ const layer = Layer.effect(
               sys.mcp(agent, session.permission),
               MessageV2.toModelMessagesEffect(msgs, model),
             ])
+            const learnedContext = yield* learning.context({ command: undefined })
             const system = [
               ...env,
               ...instructions,
               ...(mcpInstructions ? [mcpInstructions] : []),
               ...(skills ? [skills] : []),
+              ...(learnedContext ? [learnedContext] : []),
             ]
             const format = lastUser.format ?? { type: "text" as const }
             if (format.type === "json_schema") system.push(STRUCTURED_OUTPUT_SYSTEM_PROMPT)
@@ -1336,7 +1340,11 @@ const layer = Layer.effect(
         }
 
         yield* compaction.prune({ sessionID }).pipe(Effect.ignore, Effect.forkIn(scope))
-        return yield* lastAssistant(sessionID)
+        const final = yield* lastAssistant(sessionID)
+        const text = final.parts.filter((part): part is SessionV1.TextPart => part.type === "text").map((part) => part.text).join("\n")
+        yield* learning.completeTurn({ sessionID, messageID: final.info.id, assistantText: text }).pipe(Effect.catchCause(() => Effect.void))
+        yield* learning.sessionEnded({ sessionID, summary: text.slice(0, 5000) }).pipe(Effect.catchCause(() => Effect.void))
+        return final
       },
     )
 
@@ -1625,6 +1633,7 @@ export const node = LayerNode.make({
     EventV2Bridge.node,
     RuntimeFlags.node,
     Database.node,
+    Learning.node,
   ],
 })
 

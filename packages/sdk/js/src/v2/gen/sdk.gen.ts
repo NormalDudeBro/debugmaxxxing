@@ -90,6 +90,36 @@ import type {
   GlobalUpgradeResponses,
   InstanceDisposeErrors,
   InstanceDisposeResponses,
+  LearningClearErrors,
+  LearningClearResponses,
+  LearningCorrectErrors,
+  LearningCorrectResponses,
+  LearningDreamErrors,
+  LearningDreamResponses,
+  LearningExportErrors,
+  LearningExportResponses,
+  LearningHistoryErrors,
+  LearningHistoryResponses,
+  LearningKnowledgeErrors,
+  LearningKnowledgeResponses,
+  LearningModelDeleteErrors,
+  LearningModelDeleteResponses,
+  LearningModelDownloadErrors,
+  LearningModelDownloadResponses,
+  LearningModelStatusErrors,
+  LearningModelStatusResponses,
+  LearningPackInstallErrors,
+  LearningPackInstallResponses,
+  LearningRecallErrors,
+  LearningRecallResponses,
+  LearningReindexErrors,
+  LearningReindexResponses,
+  LearningRememberErrors,
+  LearningRememberResponses,
+  LearningReportErrors,
+  LearningReportResponses,
+  LearningStatusErrors,
+  LearningStatusResponses,
   LocationRef,
   LspStatusErrors,
   LspStatusResponses,
@@ -1531,6 +1561,454 @@ export class Config2 extends HeyApiClient {
       url: "/config/providers",
       ...options,
       ...params,
+    })
+  }
+}
+
+export class Learning extends HeyApiClient {
+  public status<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<LearningStatusResponses, LearningStatusErrors, ThrowOnError>({
+      url: "/learning/status",
+      ...options,
+      ...params,
+    })
+  }
+
+  public remember<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      summary?: string
+      content?: string
+      scope?: "project" | "global"
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "summary" },
+            { in: "body", key: "content" },
+            { in: "body", key: "scope" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<LearningRememberResponses, LearningRememberErrors, ThrowOnError>({
+      url: "/learning/remember",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  public correct<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      rule?: string
+      scope?: "project" | "global"
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "rule" },
+            { in: "body", key: "scope" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<LearningCorrectResponses, LearningCorrectErrors, ThrowOnError>({
+      url: "/learning/correct",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  public recall<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      terms?: Array<string>
+      limit?: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "terms" },
+            { in: "body", key: "limit" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<LearningRecallResponses, LearningRecallErrors, ThrowOnError>({
+      url: "/learning/recall",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  public dream<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<LearningDreamResponses, LearningDreamErrors, ThrowOnError>({
+      url: "/learning/dream",
+      ...options,
+      ...params,
+    })
+  }
+
+  public history<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<LearningHistoryResponses, LearningHistoryErrors, ThrowOnError>({
+      url: "/learning/history",
+      ...options,
+      ...params,
+    })
+  }
+
+  public report<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<LearningReportResponses, LearningReportErrors, ThrowOnError>({
+      url: "/learning/report",
+      ...options,
+      ...params,
+    })
+  }
+
+  public export<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<LearningExportResponses, LearningExportErrors, ThrowOnError>({
+      url: "/learning/export",
+      ...options,
+      ...params,
+    })
+  }
+
+  public reindex<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<LearningReindexResponses, LearningReindexErrors, ThrowOnError>({
+      url: "/learning/reindex",
+      ...options,
+      ...params,
+    })
+  }
+
+  public modelDelete<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).delete<
+      LearningModelDeleteResponses,
+      LearningModelDeleteErrors,
+      ThrowOnError
+    >({
+      url: "/learning/model",
+      ...options,
+      ...params,
+    })
+  }
+
+  public modelStatus<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<LearningModelStatusResponses, LearningModelStatusErrors, ThrowOnError>({
+      url: "/learning/model",
+      ...options,
+      ...params,
+    })
+  }
+
+  public modelDownload<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      download?: boolean
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "download" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<
+      LearningModelDownloadResponses,
+      LearningModelDownloadErrors,
+      ThrowOnError
+    >({
+      url: "/learning/model",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  public clear<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      scope?: "project" | "global"
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "scope" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<LearningClearResponses, LearningClearErrors, ThrowOnError>({
+      url: "/learning/clear",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  public packInstall<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      url?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "url" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<LearningPackInstallResponses, LearningPackInstallErrors, ThrowOnError>(
+      {
+        url: "/learning/packs",
+        ...options,
+        ...params,
+        headers: {
+          "Content-Type": "application/json",
+          ...options?.headers,
+          ...params.headers,
+        },
+      },
+    )
+  }
+
+  public knowledge<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+      terms?: Array<string>
+      target?: "wiki" | "codegraph" | "graph"
+      limit?: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "body", key: "terms" },
+            { in: "body", key: "target" },
+            { in: "body", key: "limit" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<LearningKnowledgeResponses, LearningKnowledgeErrors, ThrowOnError>({
+      url: "/learning/knowledge",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
     })
   }
 }
@@ -7263,6 +7741,11 @@ export class OpencodeClient extends HeyApiClient {
   private _config?: Config2
   get config(): Config2 {
     return (this._config ??= new Config2({ client: this.client }))
+  }
+
+  private _learning?: Learning
+  get learning(): Learning {
+    return (this._learning ??= new Learning({ client: this.client }))
   }
 
   private _tool?: Tool

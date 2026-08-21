@@ -93,7 +93,9 @@ const desktop = [
   "Pasirinkti priedai viršija {{limit}} MB ribą",
 ]
 
+import { LEARNING_ENGLISH } from "./learning-common"
 export const dict = {
+  ...LEARNING_ENGLISH,
   ...Object.fromEntries(DESKTOP_NATIVE_KEYS.map((key, index) => [key, desktop[index]])),
   "command.category.suggested": "Siūloma",
   "command.category.view": "Rodinys",

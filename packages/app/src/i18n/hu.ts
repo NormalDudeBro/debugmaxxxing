@@ -93,7 +93,9 @@ const desktop = [
   "A kiválasztott mellékletek meghaladják a(z) {{limit}} MB-os korlátot",
 ]
 
+import { LEARNING_ENGLISH } from "./learning-common"
 export const dict = {
+  ...LEARNING_ENGLISH,
   ...Object.fromEntries(DESKTOP_NATIVE_KEYS.map((key, index) => [key, desktop[index]])),
   "command.category.suggested": "Javasolt",
   "command.category.view": "Nézet",

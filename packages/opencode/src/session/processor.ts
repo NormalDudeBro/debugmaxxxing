@@ -25,6 +25,8 @@ import { isRecord } from "@/util/record"
 import { EventV2Bridge } from "@/event-v2-bridge"
 import { Database } from "@opencode-ai/core/database/database"
 import { Usage, type LLMEvent } from "@opencode-ai/llm"
+import * as Learning from "@/learning/service"
+import { redactSecrets } from "@/learning/privacy"
 
 const DOOM_LOOP_THRESHOLD = 3
 export type Result = "compact" | "stop" | "continue"
@@ -94,6 +96,7 @@ const layer = Layer.effect(
     const image = yield* Image.Service
     const events = yield* EventV2Bridge.Service
     const database = yield* Database.Service
+    const learning = yield* Learning.Service
 
     const create = Effect.fn("SessionProcessor.create")(function* (input: Input) {
       // Pre-capture snapshot before the LLM stream starts. The AI SDK
@@ -197,6 +200,15 @@ const layer = Layer.effect(
             time: { start: match.part.state.time.start, end: Date.now() },
           },
         })
+        if (match.part.tool !== "shell" && !(error instanceof PermissionV1.RejectedError) && !(error instanceof Question.RejectedError)) {
+          yield* learning.recordToolError({
+            sessionID: ctx.sessionID,
+            messageID: ctx.assistantMessage.id,
+            callID: toolCallID,
+            tool: match.part.tool,
+            error: errorMessage(error),
+          }).pipe(Effect.catchCause((cause) => Effect.logWarning("learning tool-error capture failed", { cause })))
+        }
         if (error instanceof PermissionV1.RejectedError || error instanceof Question.RejectedError) {
           ctx.blocked = ctx.shouldBreak
         }
@@ -419,6 +431,12 @@ const layer = Layer.effect(
           }
 
           case "provider-error":
+            yield* learning.recordToolError({
+              sessionID: ctx.sessionID,
+              messageID: ctx.assistantMessage.id,
+              tool: "provider",
+              error: value.message,
+            }).pipe(Effect.catchCause((cause) => Effect.logWarning("learning provider-error capture failed", { cause })))
             throw new Error(value.message)
 
           case "step-start":
@@ -513,6 +531,7 @@ const layer = Layer.effect(
             if (!ctx.currentText) return
             // oxlint-disable-next-line no-self-assign -- reactivity trigger
             ctx.currentText.text = ctx.currentText.text
+            ctx.currentText.text = redactSecrets(ctx.currentText.text)
             ctx.currentText.text = (yield* plugin.trigger(
               "experimental.text.complete",
               {
@@ -711,6 +730,7 @@ export const node = LayerNode.make({
     SessionStatus.node,
     Image.node,
     EventV2Bridge.node,
+    Learning.node,
     Database.node,
   ],
 })

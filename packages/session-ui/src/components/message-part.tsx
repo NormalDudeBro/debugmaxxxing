@@ -2094,6 +2094,20 @@ ToolRegistry.register({
       return `$ ${cmd}${out ? "\n\n" + out : ""}`
     })
     const [copied, setCopied] = createSignal(false)
+    const learningText = createMemo<string | undefined>(() => {
+      const learning = props.metadata.learning
+      if (!learning) return undefined
+      if (learning.status === "none") return "Failure captured for local learning"
+      if (learning.status !== "matched") return undefined
+      const pattern = learning.patternID ? `Pattern ${learning.patternID}` : "Known failure"
+      if (learning.fixExit !== undefined) {
+        const fix = learning.fixExit === 0 ? "fix succeeded" : `fix failed (${learning.fixExit})`
+        if (!learning.retried) return `${pattern} · ${fix}`
+        const retry = learning.retryExit === 0 ? "retry succeeded" : `retry failed (${learning.retryExit})`
+        return `${pattern} · ${fix} · ${retry}`
+      }
+      return `${pattern}${learning.trusted ? " · trusted fix available" : " · suggestion only"}`
+    })
 
     const handleCopy = async () => {
       const content = text()
@@ -2117,6 +2131,9 @@ ToolRegistry.register({
               </span>
               <Show when={!open() && props.input.command}>
                 <ShellSubmessage text={props.input.command} animate={sawPending} />
+              </Show>
+              <Show when={learningText()}>
+                <ShellSubmessage text={learningText()!} />
               </Show>
             </div>
           </div>
@@ -2147,6 +2164,26 @@ ToolRegistry.register({
             </pre>
           </div>
         </div>
+      </BasicTool>
+    )
+  },
+})
+
+ToolRegistry.register({
+  name: "learning",
+  render(props) {
+    const action = createMemo(() => typeof props.input.action === "string" ? props.input.action : "status")
+    return (
+      <BasicTool
+        {...props}
+        icon="task"
+        trigger={{ title: "Learning", subtitle: action() }}
+      >
+        <Show when={props.output}>
+          <div data-component="tool-output" data-scrollable tabIndex={0} role="region">
+            <Markdown text={props.output!} />
+          </div>
+        </Show>
       </BasicTool>
     )
   },

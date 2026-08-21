@@ -21,6 +21,7 @@ import { testEffect } from "../lib/effect"
 import { Tool } from "@/tool/tool"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { InstanceStore } from "@/project/instance-store"
+import * as Learning from "@/learning/service"
 
 const shellLayer = Layer.mergeAll(
   LayerNode.compile(
@@ -121,6 +122,10 @@ const fill = (mode: "lines" | "bytes", n: number) => {
   const text = `${bin} -e ${evalarg(code)} ${n}`
   if (PS.has(sh())) return `& ${text}`
   return text
+}
+const nodeEval = (code: string) => {
+  const text = `${bin} -e ${evalarg(code)}`
+  return PS.has(sh()) ? `& ${text}` : text
 }
 const glob = (p: string) =>
   process.platform === "win32" ? Filesystem.normalizePathPattern(p) : p.replaceAll("\\", "/")
@@ -1126,6 +1131,67 @@ describe("tool.shell abort", () => {
         expect(result.output).toContain("first")
         expect(result.output).toContain("second")
         expect(updates.length).toBeGreaterThan(1)
+      }),
+    ),
+  )
+})
+
+describe("tool.shell learning recovery", () => {
+  it.live("runs one trusted fix through shell permissions and retries once", () =>
+    Effect.scoped(
+      Effect.gen(function* () {
+        const dir = yield* tmpdirScoped()
+        const original = nodeEval("const p=String.fromCharCode(102,105,120,101,100);if(!(await Bun.file(p).exists())){console.error(String.fromCharCode(69,114,114,111,114,58,32,109,105,115,115,105,110,103,32,116,104,105,110,103));process.exit(1)};console.log(String.fromCharCode(114,101,99,111,118,101,114,101,100))")
+        const fix = nodeEval("await Bun.write(String.fromCharCode(102,105,120,101,100),String.fromCharCode(121,101,115))")
+        let learningCalls = 0
+        const learning = Learning.Service.of({
+          onShellResult: () => Effect.sync(() => {
+            learningCalls++
+            return {
+              status: "matched" as const,
+              patternID: "test-pattern",
+              fixes: [{ id: "fix", description: "create marker", command: fix, priority: 1, trusted: true }],
+              trusted: true,
+              captures: [],
+              autoFix: true,
+              retryOriginal: true,
+            }
+          }),
+          context: () => Effect.succeed(""),
+          status: () => Effect.succeed({}),
+          remember: () => Effect.void,
+          correct: () => Effect.void,
+          recall: () => Effect.succeed([]),
+          consolidate: () => Effect.succeed({}),
+          history: () => Effect.succeed([]),
+          report: () => Effect.succeed({}),
+          reindex: () => Effect.succeed({ rows: 0 }),
+          modelStatus: () => Effect.succeed({}),
+          deleteModel: () => Effect.void,
+          downloadModel: () => Effect.succeed({}),
+          export: () => Effect.succeed({}),
+          clear: () => Effect.void,
+          sessionEnded: () => Effect.void,
+          completeTurn: () => Effect.void,
+          recordToolError: () => Effect.void,
+          snapshotCompaction: () => Effect.void,
+          compacted: () => Effect.void,
+          installPack: () => Effect.succeed({}),
+          knowledge: () => Effect.succeed([]),
+        })
+        const asked: string[] = []
+        let askCalls = 0
+        const result = yield* runIn(
+          dir,
+          run(
+            { command: original },
+            { ...ctx, ask: (input) => Effect.sync(() => { askCalls++; asked.push(...input.patterns) }) },
+          ).pipe(Effect.provideService(Learning.Service, learning)),
+        )
+        const metadata = result.metadata.learning as Record<string, unknown>
+        expect(learningCalls).toBe(1)
+        expect(metadata).toMatchObject({ patternID: "test-pattern", fixExit: 0, retried: true, retryExit: 0 })
+        expect(askCalls).toBeGreaterThan(1)
       }),
     ),
   )

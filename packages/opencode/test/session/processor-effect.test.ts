@@ -26,6 +26,8 @@ import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
 import { SessionProjector } from "@opencode-ai/core/session/projector"
 import { LLMEvent } from "@opencode-ai/llm"
+import fs from "node:fs/promises"
+import { projectAudit, projectMemories } from "@/learning/paths"
 
 const summary = Layer.succeed(
   SessionSummary.Service,
@@ -1055,6 +1057,11 @@ itProviderError.live("session.processor effect tests fail provider-executed erro
         expect(seen).toContain(MessageV2.Event.PartUpdated.type)
         expect(seen).toContain(MessageV2.Event.Updated.type)
         expect(seen.filter((type) => type.startsWith("session.next."))).toEqual([])
+        const audit = yield* Effect.promise(() => fs.readFile(projectAudit(path.resolve(dir)), "utf8"))
+        const memories = yield* Effect.promise(() => fs.readFile(projectMemories(path.resolve(dir)), "utf8").then(JSON.parse))
+        expect(audit).toContain('"type":"tool.error"')
+        expect(audit).toContain('"tool":"lookup"')
+        expect(memories).toHaveLength(1)
       }),
     { config: cfg },
   ),

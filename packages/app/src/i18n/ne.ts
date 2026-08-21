@@ -1,4 +1,6 @@
+import { LEARNING_ENGLISH } from "./learning-common"
 export const dict: Record<string, string> = {
+  ...LEARNING_ENGLISH,
   "desktop.menu.app": "OpenCode",
   "desktop.menu.file": "फाइल",
   "desktop.menu.edit": "सम्पादन गर्नुहोस्",

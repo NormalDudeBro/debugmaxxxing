@@ -46,6 +46,7 @@ import { Discovery } from "@/skill/discovery"
 import { Snapshot } from "@/snapshot"
 import { Storage } from "@/storage/storage"
 import { ToolRegistry } from "@/tool/registry"
+import { node as LearningNode } from "@/learning/service"
 import { Truncate } from "@/tool/truncate"
 import { Worktree } from "@/worktree"
 import { RuntimeFlags } from "@/effect/runtime-flags"
@@ -83,6 +84,7 @@ import { EventApi } from "./groups/event"
 import { PtyConnectApi } from "./groups/pty"
 import { eventHandlers } from "./handlers/event"
 import { configHandlers } from "./handlers/config"
+import { learningHandlers } from "./handlers/learning"
 import { controlHandlers } from "./handlers/control"
 import { controlPlaneHandlers } from "./handlers/control-plane"
 import { experimentalHandlers } from "./handlers/experimental"
@@ -156,7 +158,8 @@ const ptyConnectApiRoutes = HttpApiBuilder.layer(PtyConnectApi).pipe(
 )
 const instanceApiRoutes = HttpApiBuilder.layer(InstanceHttpApi).pipe(
   Layer.provide([
-    configHandlers,
+     configHandlers,
+     learningHandlers,
     experimentalHandlers,
     fileHandlers,
     instanceHandlers,
@@ -256,6 +259,7 @@ const app = LayerNode.group([
   Command.node,
   Truncate.node,
   ToolRegistry.node,
+  LearningNode,
   Format.node,
   Project.node,
   Vcs.node,

@@ -87,6 +87,22 @@ const layer = Layer.effect(
         hints: hints(PROMPT_REVIEW),
       }
 
+      const learningCommands: Array<[string, string, string]> = [
+        ["learn", "inspect local learning status", "Call the learning tool with action status, summarize what is active, then use remember or correct only if the user supplied knowledge."],
+        ["learn-patterns", "inspect learned error patterns", "Call the learning tool with action status and report the project learning state."],
+        ["remember", "save project knowledge", "Call the learning tool with action remember. Use $ARGUMENTS as both a concise summary and the content."],
+        ["correct", "save a behavioral correction", "Call the learning tool with action correct and rule $ARGUMENTS."],
+        ["recall", "search learned project knowledge", "Call the learning tool with action recall and terms derived from $ARGUMENTS."],
+        ["dream", "consolidate local learning", "Call the learning tool with action dream and summarize the result."],
+        ["history", "show learned project history", "Call the learning tool with action history."],
+        ["learning-status", "show local learning status", "Call the learning tool with action status."],
+        ["learning-report", "show local learning report", "Call the learning tool with action report."],
+        ["learning-export", "export redacted learning data", "Call the learning tool with action export."],
+      ]
+      for (const [name, description, template] of learningCommands) {
+        commands[name] = { name, description, source: "command", template, hints: hints(template) }
+      }
+
       for (const [name, command] of Object.entries(cfg.command ?? {})) {
         commands[name] = {
           name,

@@ -33,6 +33,8 @@ import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
 import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
+import { LearningStore } from "@/learning/store"
+import { projectHead, projectMemories } from "@/learning/paths"
 
 const summary = Layer.succeed(
   SessionSummary.Service,
@@ -845,6 +847,7 @@ describe("session.compaction.process", () => {
   it.instance(
     "publishes compacted event on continue",
     Effect.gen(function* () {
+      const test = yield* TestInstance
       const events = yield* EventV2Bridge.Service
       const ssn = yield* SessionNs.Service
       const session = yield* ssn.create({})
@@ -873,6 +876,9 @@ describe("session.compaction.process", () => {
       expect(result).toBe("continue")
       expect(seen).toContain(SessionCompaction.Event.Compacted.type)
       expect(seen.filter((type) => type.startsWith("session.next."))).toEqual([])
+      const store = new LearningStore()
+      expect((yield* Effect.promise(() => store.read(projectHead(test.directory), { commit: undefined }))).commit).toBeDefined()
+      expect(yield* Effect.promise(() => store.read(projectMemories(test.directory), []))).toHaveLength(1)
     }),
   )
 

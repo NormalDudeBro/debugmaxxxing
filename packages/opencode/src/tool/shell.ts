@@ -1,4 +1,4 @@
-import { Effect, Stream } from "effect"
+import { Effect, Option, Stream } from "effect"
 import os from "os"
 import { createWriteStream } from "node:fs"
 import * as Tool from "./tool"
@@ -20,6 +20,8 @@ import { ChildProcess } from "effect/unstable/process"
 import { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner"
 import { ShellPrompt, type Parameters } from "./shell/prompt"
 import { BashArity } from "@/permission/arity"
+import * as Learning from "@/learning/service"
+import { substituteCaptures } from "@/learning/pattern/matcher"
 
 export { Parameters } from "./shell/prompt"
 
@@ -77,6 +79,21 @@ type Scan = {
 type Chunk = {
   text: string
   size: number
+}
+
+type ShellRunInput = {
+  shell: string
+  command: string
+  cwd: string
+  env: NodeJS.ProcessEnv
+  timeout: number
+  recovery?: boolean
+}
+
+type ShellRunOutput = {
+  title: string
+  metadata: Record<string, any>
+  output: string
 }
 
 const resolveWasm = (asset: string) => {
@@ -323,6 +340,7 @@ export const ShellTool = Tool.define(
     const trunc = yield* Truncate.Service
     const plugin = yield* Plugin.Service
     const flags = yield* RuntimeFlags.Service
+    const learning = yield* Effect.serviceOption(Learning.Service)
     const defaultTimeoutMs = flags.bashDefaultTimeoutMs ?? 2 * 60 * 1000
 
     const cygpath = Effect.fn("ShellTool.cygpath")(function* (shell: string, text: string) {
@@ -370,6 +388,16 @@ export const ShellTool = Tool.define(
       return scan
     })
 
+    const authorize = Effect.fn("ShellTool.authorize")(function* (command: string, ctx: Tool.Context, ps: boolean, shell: string) {
+      yield* Effect.scoped(
+        Effect.gen(function* () {
+          const tree = yield* Effect.acquireRelease(parse(command, ps), (tree) => Effect.sync(() => tree.delete()))
+          const scan = yield* collect(tree.rootNode, ps, shell)
+          yield* ask(ctx, scan, { command })
+        }),
+      )
+    })
+
     const shellEnv = Effect.fn("ShellTool.shellEnv")(function* (ctx: Tool.Context, cwd: string) {
       const extra = yield* plugin.trigger(
         "shell.env",
@@ -382,14 +410,8 @@ export const ShellTool = Tool.define(
       }
     })
 
-    const run = Effect.fn("ShellTool.run")(function* (
-      input: {
-        shell: string
-        command: string
-        cwd: string
-        env: NodeJS.ProcessEnv
-        timeout: number
-      },
+    const run: (input: ShellRunInput, ctx: Tool.Context) => Effect.Effect<ShellRunOutput> = Effect.fn("ShellTool.run")(function* (
+      input: ShellRunInput,
       ctx: Tool.Context,
     ) {
       const limits = yield* trunc.limits()
@@ -539,6 +561,42 @@ export const ShellTool = Tool.define(
       if (meta.length > 0) {
         output += "\n\n<shell_metadata>\n" + meta.join("\n") + "\n</shell_metadata>"
       }
+      const learningResult = !input.recovery && Option.isSome(learning)
+        ? yield* learning.value.onShellResult({
+            sessionID: ctx.sessionID,
+            messageID: ctx.messageID,
+            callID: ctx.callID,
+            command: input.command,
+            cwd: input.cwd,
+            exitCode: code,
+            output,
+            truncated: cut,
+            aborted,
+            timedOut: expired,
+          }).pipe(Effect.catchCause(() => Effect.succeed({ status: "disabled" as const })))
+        : { status: "disabled" as const }
+      const trustedFix = learningResult.status === "matched" && learningResult.trusted && learningResult.autoFix !== false
+        ? learningResult.fixes?.find((fix) => fix.trusted && fix.command)
+        : undefined
+      let finalLearning: Record<string, unknown> = learningResult
+      if (!input.recovery && trustedFix?.command) {
+        const captures = learningResult.status === "matched" ? learningResult.captures ?? [] : []
+        const retryOriginal = learningResult.status === "matched" && learningResult.retryOriginal !== false
+        const command = substituteCaptures(trustedFix.command, captures)
+        yield* authorize(command, ctx, Shell.ps(input.shell), input.shell)
+        const fix = yield* run({ ...input, command, recovery: true }, ctx)
+        const retry = fix.metadata.exit === 0 && retryOriginal
+          ? yield* run({ ...input, recovery: true }, ctx)
+          : undefined
+        finalLearning = {
+          ...learningResult,
+          fix: command,
+          fixExit: fix.metadata.exit,
+          retried: !!retry,
+          retryExit: retry?.metadata.exit,
+        }
+      }
+      yield* ctx.metadata({ metadata: { output: last || preview(output), learning: finalLearning } })
       return {
         title: input.command,
         metadata: {
@@ -546,6 +604,7 @@ export const ShellTool = Tool.define(
           exit: code,
           truncated: cut,
           ...(cut && file ? { outputPath: file } : {}),
+          learning: finalLearning,
         },
         output,
       }
@@ -574,15 +633,7 @@ export const ShellTool = Tool.define(
               }
               const timeout = params.timeout ?? defaultTimeoutMs
               const ps = Shell.ps(shell)
-              yield* Effect.scoped(
-                Effect.gen(function* () {
-                  const tree = yield* Effect.acquireRelease(parse(params.command, ps), (tree) =>
-                    Effect.sync(() => tree.delete()),
-                  )
-                  const scan = yield* collect(tree.rootNode, ps, shell)
-                  yield* ask(ctx, scan, params)
-                }),
-              )
+              yield* authorize(params.command, ctx, ps, shell)
 
               return yield* run(
                 {

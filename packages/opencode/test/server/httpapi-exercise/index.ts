@@ -162,6 +162,46 @@ const scenarios: Scenario[] = [
     .at((ctx) => ({ path: "/config", headers: ctx.headers(), body: { username: 1 } }))
     .status(400),
   http.protected.get("/config/providers", "config.providers").json(),
+  http.protected.get("/learning/status", "learning.status").json(200, object, "status"),
+  http.protected
+    .post("/learning/remember", "learning.remember")
+    .mutating()
+    .at((ctx) => ({ path: "/learning/remember", headers: ctx.headers(), body: { summary: "HTTP memory", content: "Remember this" } }))
+    .json(200, undefined, "status"),
+  http.protected
+    .post("/learning/correct", "learning.correct")
+    .mutating()
+    .at((ctx) => ({ path: "/learning/correct", headers: ctx.headers(), body: { rule: "Use Bun for tests" } }))
+    .json(200, undefined, "status"),
+  http.protected
+    .post("/learning/recall", "learning.recall.invalid")
+    .at((ctx) => ({ path: "/learning/recall", headers: ctx.headers(), body: {} }))
+    .status(400, undefined, "status"),
+  http.protected.post("/learning/dream", "learning.dream").mutating().json(200, object, "status"),
+  http.protected.get("/learning/history", "learning.history").json(200, array, "status"),
+  http.protected.get("/learning/report", "learning.report").json(200, object, "status"),
+  http.protected.get("/learning/export", "learning.export").json(200, object, "status"),
+  http.protected.post("/learning/reindex", "learning.reindex").mutating().json(200, object, "status"),
+  http.protected.get("/learning/model", "learning.model.status").json(200, object, "status"),
+  http.protected
+    .post("/learning/model", "learning.model.download")
+    .probe({ path: "/learning/model", body: { download: false } })
+    .at((ctx) => ({ path: "/learning/model", headers: ctx.headers(), body: { download: false } }))
+    .json(200, object, "status"),
+  http.protected.delete("/learning/model", "learning.model.delete").mutating().json(200, undefined, "status"),
+  http.protected
+    .post("/learning/clear", "learning.clear")
+    .mutating()
+    .at((ctx) => ({ path: "/learning/clear", headers: ctx.headers(), body: { scope: "project" } }))
+    .json(200, undefined, "status"),
+  http.protected
+    .post("/learning/packs", "learning.packInstall.invalid")
+    .at((ctx) => ({ path: "/learning/packs", headers: ctx.headers(), body: {} }))
+    .status(400, undefined, "status"),
+  http.protected
+    .post("/learning/knowledge", "learning.knowledge")
+    .at((ctx) => ({ path: "/learning/knowledge", headers: ctx.headers(), body: { terms: ["session"], target: "graph" } }))
+    .json(200, undefined, "status"),
   http.protected.get("/project", "project.list").json(200, array, "status"),
   http.protected.get("/project/current", "project.current").json(
     200,
