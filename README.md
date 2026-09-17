@@ -64,6 +64,58 @@ nix run nixpkgs#opencode           # or github:anomalyco/opencode for latest dev
 > [!TIP]
 > Remove versions older than 0.1.x before installing.
 
+### Debugmaxxxing Release
+
+The current `wave-compatibility` release is `v1.18.29` and includes a Windows
+x64 CLI build that reports a semver-compatible version for free-tier models.
+
+#### Windows x64: Quick Install
+
+1. Open the [v1.18.29 release](https://github.com/NormalDudeBro/debugmaxxxing/releases/tag/v1.18.29).
+2. Download `opencode-windows-x64.zip`.
+3. Extract the ZIP to a folder such as `C:\Tools\opencode`.
+4. Open PowerShell in that folder.
+5. Verify the install:
+
+   ```powershell
+   .\opencode.exe --version
+   ```
+
+   The output should be `1.18.29`.
+
+6. Start OpenCode from that folder:
+
+   ```powershell
+   .\opencode.exe
+   ```
+
+To run `opencode` from any PowerShell window, add the extracted folder to your
+user `Path` environment variable and open a new terminal.
+
+#### Build From Source
+
+1. Install Git and [Bun 1.3.14](https://bun.sh/).
+2. Clone the release branch:
+
+   ```powershell
+   git clone --branch wave-compatibility --single-branch https://github.com/NormalDudeBro/debugmaxxxing.git
+   cd debugmaxxxing
+   ```
+
+3. Install dependencies and build the Windows x64 binary:
+
+   ```powershell
+   bun install
+   $env:OPENCODE_VERSION = "1.18.29"
+   bun run packages/opencode/script/build.ts --single
+   ```
+
+4. Run the result:
+
+   ```powershell
+   .\packages\opencode\dist\opencode-windows-x64\bin\opencode.exe
+   ```
+
 ### Desktop App (BETA)
 
 OpenCode is also available as a desktop application. Download directly from the [releases page](https://github.com/anomalyco/opencode/releases) or [opencode.ai/download](https://opencode.ai/download).
