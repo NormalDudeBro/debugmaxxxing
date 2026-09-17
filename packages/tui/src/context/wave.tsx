@@ -15,6 +15,7 @@ export const { use: useWave, provider: WaveProvider } = createSimpleContext({
     })
     let timer: ReturnType<typeof setInterval> | undefined
     let autoStarted = false
+    let available = true
 
     const refresh = async () => {
       setStore("loading", true)
@@ -26,6 +27,10 @@ export const { use: useWave, provider: WaveProvider } = createSimpleContext({
           autoStarted = true
           await sdk.client.wave.arm()
         }
+      } catch {
+        available = false
+        setStore("campaigns", [])
+        setStore("state", null)
       } finally {
         setStore("loading", false)
       }
@@ -42,6 +47,9 @@ export const { use: useWave, provider: WaveProvider } = createSimpleContext({
     return {
       get data() {
         return store
+      },
+      get available() {
+        return available
       },
       refresh,
       async select(id: string | null) {

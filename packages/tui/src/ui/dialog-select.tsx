@@ -19,6 +19,7 @@ import { Locale } from "../util/locale"
 import { getScrollAcceleration } from "../util/scroll"
 import { useTuiConfig } from "../config"
 import { formatKeyBindings, useBindings, useKeymapSelector } from "../keymap"
+import * as Clipboard from "../clipboard"
 
 export interface DialogSelectProps<T> {
   title: string
@@ -433,6 +434,12 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
           category: "Dialog",
           run: submit,
         },
+        {
+          name: "prompt.paste",
+          title: "Paste from clipboard",
+          category: "Prompt",
+          run: () => void Clipboard.pasteText(input),
+        },
         ...visible.map((item) => ({
           name: item.command,
           title: item.title,
@@ -457,6 +464,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
           "dialog.select.end",
           "dialog.select.submit",
         ]),
+        ...tuiConfig.keybinds.get("prompt.paste").map((binding) => ({ ...binding, preventDefault: true })),
         ...visible.flatMap((item) => tuiConfig.keybinds.get(item.command)),
         ...(visible.length
           ? [

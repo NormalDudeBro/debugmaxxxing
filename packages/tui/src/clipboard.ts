@@ -81,6 +81,16 @@ export async function read() {
   if (text) return { data: text, mime: "text/plain" }
 }
 
+export async function pasteText(
+  input: { insertText(text: string): void },
+  readClipboard: () => Promise<{ data: string; mime: string } | undefined> = read,
+) {
+  const content = await readClipboard()
+  if (!content?.mime.startsWith("text/") || content.data.length === 0) return false
+  input.insertText(content.data.replace(/\r\n/g, "\n").replace(/\r/g, "\n"))
+  return true
+}
+
 export function copyCommand(
   os: NodeJS.Platform,
   wayland: boolean,

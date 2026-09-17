@@ -5,6 +5,7 @@ import { Show, createEffect, createSignal, onMount, type JSX } from "solid-js"
 import { Spinner } from "../component/spinner"
 import { useTuiConfig } from "../config"
 import { useBindings, useCommandShortcut } from "../keymap"
+import * as Clipboard from "../clipboard"
 
 export type DialogPromptProps = {
   title: string
@@ -42,8 +43,17 @@ export function DialogPrompt(props: DialogPromptProps) {
         category: "Dialog",
         run: confirm,
       },
+      {
+        name: "prompt.paste",
+        title: "Paste from clipboard",
+        category: "Prompt",
+        run: () => void Clipboard.pasteText(textarea),
+      },
     ],
-    bindings: tuiConfig.keybinds.gather("dialog.prompt", ["dialog.prompt.submit"]),
+    bindings: [
+      ...tuiConfig.keybinds.gather("dialog.prompt", ["dialog.prompt.submit"]),
+      ...tuiConfig.keybinds.get("prompt.paste").map((binding) => ({ ...binding, preventDefault: true })),
+    ],
   }))
 
   onMount(() => {
