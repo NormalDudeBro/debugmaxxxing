@@ -7,11 +7,10 @@
     </picture>
   </a>
 </p>
-<p align="center">The open source AI coding agent.</p>
+<p align="center"><strong>Debugmaxxxing</strong></p>
+<p align="center">An experimental internal fork of OpenCode with custom TUI and workflow integrations.</p>
 <p align="center">
-  <a href="https://opencode.ai/discord"><img alt="Discord" src="https://img.shields.io/discord/1391832426048651334?style=flat-square&label=discord" /></a>
-  <a href="https://www.npmjs.com/package/opencode-ai"><img alt="npm" src="https://img.shields.io/npm/v/opencode-ai?style=flat-square" /></a>
-  <a href="https://github.com/anomalyco/opencode/actions/workflows/publish.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/anomalyco/opencode/publish.yml?style=flat-square&branch=dev" /></a>
+  <a href="https://github.com/NormalDudeBro/debugmaxxxing/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/NormalDudeBro/debugmaxxxing?style=flat-square" /></a>
 </p>
 
 <p align="center">
@@ -43,7 +42,25 @@
 
 ---
 
-### Installation
+## Repository Scope
+
+Debugmaxxxing is an internal, experimental fork of
+[anomalyco/opencode](https://github.com/anomalyco/opencode). It is not an
+official OpenCode distribution and is not affiliated with the upstream team.
+
+The canonical source branch is `main`. This fork adds and maintains:
+
+- A custom wave TUI, dashboard, branding, and status views.
+- Windows-friendly clipboard behavior and a Windows x64 CLI build.
+- Integrated development skills vendored from Matt Pocock's skills repository.
+- Debugmaxxxing-specific workflow, state, and provider integrations.
+
+Use the [Debugmaxxxing release](#debugmaxxxing-release) below for this fork.
+
+### Upstream OpenCode Installation (Not This Fork)
+
+The commands in this section install official upstream OpenCode packages. They
+are included for upstream reference; they do not install Debugmaxxxing.
 
 ```bash
 # YOLO
@@ -64,7 +81,7 @@ nix run nixpkgs#opencode           # or github:anomalyco/opencode for latest dev
 > [!TIP]
 > Remove versions older than 0.1.x before installing.
 
-### Debugmaxxxing Release
+## Debugmaxxxing Release
 
 The current `wave-compatibility` release is `v1.18.29` and includes a Windows
 x64 CLI build that reports a semver-compatible version for free-tier models.
@@ -116,7 +133,7 @@ user `Path` environment variable and open a new terminal.
    .\packages\opencode\dist\opencode-windows-x64\bin\opencode.exe
    ```
 
-### Desktop App (BETA)
+### Upstream Desktop App (BETA)
 
 OpenCode is also available as a desktop application. Download directly from the [releases page](https://github.com/anomalyco/opencode/releases) or [opencode.ai/download](https://opencode.ai/download).
 
@@ -172,9 +189,11 @@ For more info on how to configure OpenCode, [**head over to our docs**](https://
 
 If you're interested in contributing to OpenCode, please read our [contributing docs](./CONTRIBUTING.md) before submitting a pull request.
 
-### Building on OpenCode
+### Upstream Attribution
 
-If you are working on a project that's related to OpenCode and is using "opencode" as part of its name, for example "opencode-dashboard" or "opencode-mobile", please add a note to your README to clarify that it is not built by the OpenCode team and is not affiliated with us in any way.
+This repository is derived from the upstream OpenCode project. See the
+[upstream repository](https://github.com/anomalyco/opencode) for the official
+project, releases, documentation, and community resources.
 
 ---
 

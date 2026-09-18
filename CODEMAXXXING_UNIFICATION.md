@@ -1,6 +1,6 @@
 # Codemaxxxing Integration
 
-Canonical branch: `wave-compatibility` in `C:\codefix\integration-main`.
+Canonical branch: `main` in `C:\codefix\integration-main`.
 
 ## Sources
 
@@ -32,7 +32,7 @@ Canonical branch: `wave-compatibility` in `C:\codefix\integration-main`.
 - PTY HttpApi tests: 5 passing, 8 skipped.
 - Full TUI tests: 198 passing, 1 skipped, 1 Windows path-normalization failure in the pre-existing `runtime.test.tsx` suite.
 - Windows build: `packages/opencode/dist/opencode-windows-x64/bin/opencode.exe` built successfully.
-- Build smoke test: `0.0.0-wave-compatibility-202609060536`.
+- Build smoke test: `1.18.29`.
 - Interactive launch: compiled binary rendered the codemaxxxing home UI and exited cleanly on Ctrl+C.
 
 The old checkout directories are reference-only and are archived before removal; `integration-main` remains the sole canonical working copy.
