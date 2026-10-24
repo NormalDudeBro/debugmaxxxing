@@ -56,6 +56,7 @@ import { useTuiConfig } from "../../config"
 import { usePromptWorkspace } from "./workspace"
 import { usePromptMove } from "./move"
 import { readLocalAttachment } from "./local-attachment"
+import { startVoiceInput, type VoiceStatus } from "../../prompt/voice"
 import { useLocation } from "../../context/location"
 
 registerOpencodeSpinner()
@@ -212,6 +213,68 @@ export function Prompt(props: PromptProps) {
   const [cursorVersion, setCursorVersion] = createSignal(0)
   const currentProviderLabel = createMemo(() => local.model.parsed().provider)
   const hasRightContent = createMemo(() => Boolean(props.right))
+  const [voiceStatus, setVoiceStatus] = createSignal<VoiceStatus>()
+  let voice: ReturnType<typeof startVoiceInput> | undefined
+
+  function cancelVoice() {
+    const current = voice
+    voice = undefined
+    setVoiceStatus(undefined)
+    current?.cancel()
+  }
+
+  async function toggleVoice() {
+    dialog.clear()
+    if (voice) {
+      if (voiceStatus() === "listening") {
+        setVoiceStatus("transcribing")
+        try {
+          voice.stop()
+        } catch (error) {
+          cancelVoice()
+          toast.show({ title: "Voice input failed", message: errorMessage(error), variant: "error", duration: 10000 })
+        }
+      }
+      return
+    }
+    if (props.disabled || props.visible === false || store.mode !== "normal") return
+    setVoiceStatus("starting")
+    let current: ReturnType<typeof startVoiceInput> | undefined
+    try {
+      current = startVoiceInput((status) => {
+        if (voice === current) setVoiceStatus(status)
+      })
+      voice = current
+      const text = await current.result
+      if (voice !== current || !input || input.isDestroyed) return
+      if (text) {
+        input.gotoBufferEnd()
+        input.insertText(`${input.plainText && !/\s$/.test(input.plainText) ? " " : ""}${text}`)
+        setTimeout(() => {
+          if (!input || input.isDestroyed) return
+          input.getLayoutNode().markDirty()
+          input.gotoBufferEnd()
+          renderer.requestRender()
+        }, 0)
+      }
+      if (!text) toast.show({ variant: "warning", message: "No speech detected. Try again." })
+    } catch (error) {
+      if (voice === current && voiceStatus()) {
+        toast.show({ title: "Voice input failed", message: errorMessage(error), variant: "error", duration: 10000 })
+      }
+    } finally {
+      if (voice === current) {
+        voice = undefined
+        setVoiceStatus(undefined)
+      }
+    }
+  }
+
+  createEffect(on(() => props.sessionID, cancelVoice, { defer: true }))
+  createEffect(() => {
+    if (props.disabled || props.visible === false) cancelVoice()
+  })
+  onCleanup(cancelVoice)
 
   function promptModelWarning() {
     toast.show({
@@ -334,6 +397,24 @@ export function Prompt(props: PromptProps) {
 
   const promptCommands = createMemo(() =>
     [
+      {
+        title: voiceStatus() === "listening" ? "Stop voice recording" : "Dictate with local Whisper",
+        name: "prompt.voice",
+        category: "Prompt",
+        slashName: "voice",
+        enabled: voiceStatus() === "listening" || (!voiceStatus() && !props.disabled && store.mode === "normal"),
+        run: toggleVoice,
+      },
+      {
+        title: "Cancel voice input",
+        name: "prompt.voice.cancel",
+        category: "Prompt",
+        enabled: Boolean(voiceStatus()),
+        run: () => {
+          cancelVoice()
+          dialog.clear()
+        },
+      },
       {
         title: "Clear prompt",
         name: "prompt.clear",
@@ -945,6 +1026,7 @@ export function Prompt(props: PromptProps) {
   }
 
   async function submitInner() {
+    if (voiceStatus()) return false
     workspace.clearNotice()
 
     // IME: double-defer may fire before onContentChange flushes the last
@@ -1441,6 +1523,15 @@ export function Prompt(props: PromptProps) {
               cursorStyle={tuiConfig.cursor}
               syntaxStyle={syntax()}
             />
+            <Show when={voiceStatus()}>
+              <text fg={theme.warning}>
+                {voiceStatus() === "starting"
+                  ? "Voice: starting microphone..."
+                  : voiceStatus() === "listening"
+                    ? "Voice: recording (max 2 min). Command palette: stop or cancel voice input."
+                    : "Voice: transcribing locally (first use downloads the model)..."}
+              </text>
+            </Show>
             <box flexDirection="row" flexShrink={0} paddingTop={1} gap={1} justifyContent="space-between">
               <box flexDirection="row" gap={1}>
                 <Show when={local.agent.current()} fallback={<box height={1} />}>

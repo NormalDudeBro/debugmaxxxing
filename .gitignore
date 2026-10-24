@@ -27,6 +27,7 @@ target
 .direnv/
 
 # Local dev files
+.venv-voice/
 opencode-dev
 UPCOMING_CHANGELOG.md
 logs/
